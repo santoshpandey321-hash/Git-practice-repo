@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Airflow Lab 2 - Dataset-Driven DAGs on MWAA | DEH Diamond</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #ffffff; color: #1f1840; min-height: 100vh; padding: 2rem; line-height: 1.7; }
+    .container { max-width: 900px; margin: 0 auto; }
+    .brand-header { text-align: center; margin-bottom: 1.5rem; padding: 1.5rem 2rem; background: #1f1840; border-radius: 12px; color: #ffffff; }
+    .brand-header h1 { font-size: 2rem; color: #93C572; margin-bottom: 0.3rem; }
+    .brand-header .subtitle { font-size: 1.1rem; color: #e0e0e0; }
+    .brand-header .brand-name { font-size: 0.85rem; color: #93C572; margin-top: 0.8rem; font-weight: 600; letter-spacing: 0.5px; }
+    .banner-warning { background: #fff8e1; border: 2px solid #ffb300; border-left: 6px solid #ffb300; border-radius: 8px; padding: 1rem 1.2rem; margin-bottom: 1rem; color: #5d4e00; font-size: 0.92rem; }
+    .banner-warning strong { color: #e65100; }
+    .banner-critical { background: #ffebee; border: 3px solid #c62828; border-left: 8px solid #c62828; border-radius: 8px; padding: 1.2rem 1.4rem; margin-bottom: 1.2rem; color: #b71c1c; font-size: 1rem; font-weight: 600; box-shadow: 0 2px 10px rgba(198, 40, 40, 0.25); }
+    .banner-critical .headline { display: block; font-size: 1.15rem; font-weight: 800; color: #c62828; margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.5px; }
+    .banner-info-green { background: #e8f5e9; border: 2px solid #93C572; border-left: 6px solid #93C572; border-radius: 8px; padding: 1rem 1.2rem; margin-bottom: 1rem; color: #1b5e20; font-size: 0.92rem; }
+    .banner-info-green a { color: #2e7d32; font-weight: 600; }
+    .banner-purple { background: #f3e5f5; border: 2px solid #7b1fa2; border-left: 6px solid #7b1fa2; border-radius: 8px; padding: 1rem 1.2rem; margin-bottom: 1.5rem; color: #4a148c; font-size: 0.92rem; }
+    .section { background: #f9f9fc; border: 1px solid #e0dce8; border-radius: 12px; padding: 1.8rem; margin-bottom: 1.5rem; page-break-inside: avoid; }
+    .section h2 { font-size: 1.3rem; color: #1f1840; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #93C572; }
+    .section h3 { font-size: 1.05rem; color: #1f1840; margin-top: 1.3rem; margin-bottom: 0.5rem; }
+    .section p, .section li { color: #333; margin-bottom: 0.5rem; }
+    .section ul, .section ol { padding-left: 1.5rem; margin-top: 0.5rem; }
+    .section ol li { margin-bottom: 0.7rem; }
+    .code-block { background: #1a1a2e; border-radius: 8px; padding: 1rem 1.2rem; margin: 1rem 0; font-family: 'Courier New', Courier, monospace; font-size: 0.88rem; color: #7fdbca; overflow-x: auto; white-space: pre; line-height: 1.6; }
+    .info-box { background: #e3f2fd; border-left: 4px solid #1976d2; border-radius: 6px; padding: 0.8rem 1rem; margin: 0.8rem 0; color: #0d47a1; font-size: 0.9rem; }
+    .warning-box { background: #fff8e1; border-left: 4px solid #f9a825; border-radius: 6px; padding: 0.8rem 1rem; margin: 0.8rem 0; color: #5d4e00; font-size: 0.9rem; }
+    .success-box { background: #e8f5e9; border-left: 4px solid #43a047; border-radius: 6px; padding: 0.8rem 1rem; margin: 0.8rem 0; color: #1b5e20; font-size: 0.9rem; }
+    .resource-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+    .resource-table th { background: #1f1840; color: #93C572; padding: 0.7rem 1rem; text-align: left; font-weight: 600; }
+    .resource-table td { padding: 0.6rem 1rem; border-bottom: 1px solid #e0dce8; color: #333; }
+    .resource-table tr:nth-child(even) { background: #f4f2f8; }
+    .resource-table code { background: #eee8f5; padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.85rem; color: #4a148c; }
+    .architecture-block { background: #1f1840; border-radius: 12px; padding: 2rem; margin: 1.5rem 0; color: #e0e0e0; text-align: center; }
+    .architecture-block h3 { color: #93C572; margin-bottom: 1rem; }
+    .architecture-block .flow { font-family: 'Courier New', monospace; font-size: 1rem; color: #7fdbca; line-height: 2; }
+    .whats-next { background: #1f1840; border-radius: 12px; padding: 2rem; margin-top: 2rem; margin-bottom: 1.5rem; color: #e0e0e0; }
+    .whats-next h2 { color: #93C572; margin-bottom: 1rem; border-bottom: none; }
+    .whats-next p, .whats-next li { color: #d0d0d0; margin-bottom: 0.5rem; }
+    .whats-next ul { padding-left: 1.5rem; }
+    .footer { text-align: center; margin-top: 2rem; padding: 1.5rem; border-top: 2px solid #1f1840; color: #1f1840; font-size: 0.85rem; font-weight: 600; }
+    @media print { body { padding: 0.5rem; font-size: 11pt; } .container { max-width: 100%; } .section, .architecture-block, .whats-next { page-break-inside: avoid; } .code-block { font-size: 9pt; } }
+    @media (max-width: 768px) { body { padding: 1rem; } .brand-header h1 { font-size: 1.5rem; } .section { padding: 1.2rem; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- HEADER -->
+    <div class="brand-header">
+      <h1>🌬️ Airflow Lab 2: Dataset-Driven DAGs</h1>
+      <p class="subtitle">Diamond — Trigger One DAG from Another with Assets</p>
+      <p class="brand-name">Sachin Chandrashekhar — Data Engineering Hub</p>
+    </div>
+
+    <!-- PREREQ BANNER -->
+    <div class="banner-warning">
+      <strong>✅ Prerequisite — finish Lab 1 first.</strong> This lab reuses the <strong>same MWAA environment, Glue jobs,
+      and S3 buckets</strong> you created in Lab 1. If you already tore everything down, re-run the one-shot setup before
+      starting. Region must be <strong>us-east-1</strong>.
+    </div>
+
+    <!-- OBJECTIVE -->
+    <div class="banner-purple">
+      💎 <strong>Lab Objective:</strong> So far one DAG ran all three Glue jobs in a line. In the real world, different
+      teams own different stages, so pipelines are <strong>split across DAGs</strong> that hand off through <em>data</em>,
+      not a fixed schedule. You'll build <strong>two DAGs</strong>: a <strong>producer</strong> that creates curated data,
+      and a <strong>consumer</strong> that is <strong>automatically triggered</strong> the moment that data is produced —
+      using Airflow 3's <strong>Asset</strong> (data-aware) scheduling.
+      <br><br><strong>⏱️ Estimated time: ~20 minutes</strong>
+    </div>
+
+    <!-- CONCEPT -->
+    <div class="section">
+      <h2>Part 1 — The Concept: Data-Aware Scheduling</h2>
+      <p>In Lab 1 your DAG ran on a <strong>time</strong> schedule (<code>@monthly</code>). But what if the right trigger
+      isn't "it's 6 AM" — it's "the upstream data just landed"? That's <strong>data-aware scheduling</strong>.</p>
+
+      <div class="info-box">
+        🧠 <strong>What is an Asset?</strong> An <strong>Asset</strong> is just a named piece of data (identified by a URI,
+        like an S3 path). A <strong>producer</strong> task declares it <em>updates</em> that asset. A <strong>consumer</strong>
+        DAG says "run me whenever that asset updates." Airflow wires the dependency for you — no schedule, no sensor, no polling.
+      </div>
+
+      <div class="info-box">
+        ℹ️ <strong>Key rule:</strong> Airflow marks an asset as updated <strong>only if the producer task succeeds</strong>.
+        If it fails or is skipped, the consumer DAG does <strong>not</strong> run. The hand-off is safe by design.
+      </div>
+
+      <div class="architecture-block">
+        <h3>🏗️ What We're Building</h3>
+        <svg viewBox="0 0 640 440" width="100%" style="max-width:620px; height:auto; display:block; margin:0 auto;" role="img" aria-label="Producer DAG ingests data and updates the raw asset, which auto-triggers the consumer DAG that runs raw-to-curated then curated-to-aggregated">
+          <defs>
+            <marker id="arrow" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+              <path d="M0,0 L7,3 L0,6 Z" fill="#93C572"/>
+            </marker>
+          </defs>
+
+          <!-- PRODUCER DAG container -->
+          <rect x="40" y="20" width="560" height="130" rx="12" fill="#2a2250" stroke="#93C572" stroke-width="2"/>
+          <text x="60" y="48" fill="#93C572" font-family="Segoe UI, sans-serif" font-size="15" font-weight="700">DAG 1 — PRODUCER</text>
+          <text x="60" y="68" fill="#b9b4d0" font-family="Courier New, monospace" font-size="12">schedule = @monthly</text>
+
+          <!-- task: data_ingestion -->
+          <rect x="225" y="86" width="190" height="48" rx="8" fill="#1a1a2e" stroke="#7fdbca" stroke-width="1.5"/>
+          <text x="320" y="107" fill="#7fdbca" font-family="Courier New, monospace" font-size="13" text-anchor="middle">data_ingestion</text>
+          <text x="320" y="123" fill="#93C572" font-family="Courier New, monospace" font-size="10.5" text-anchor="middle">outlets=[raw_asset]</text>
+
+          <!-- hand-off arrow -->
+          <line x1="320" y1="150" x2="320" y2="240" stroke="#93C572" stroke-width="2.5" marker-end="url(#arrow)"/>
+
+          <!-- asset pill -->
+          <rect x="220" y="178" width="200" height="34" rx="17" fill="#93C572"/>
+          <text x="320" y="200" fill="#1f1840" font-family="Courier New, monospace" font-size="12" font-weight="700" text-anchor="middle">📦 raw_asset</text>
+          <text x="470" y="199" fill="#b9b4d0" font-family="Segoe UI, sans-serif" font-size="11" text-anchor="middle">updated on success</text>
+
+          <!-- CONSUMER DAG container -->
+          <rect x="40" y="252" width="560" height="160" rx="12" fill="#2a2250" stroke="#93C572" stroke-width="2"/>
+          <text x="60" y="280" fill="#93C572" font-family="Segoe UI, sans-serif" font-size="15" font-weight="700">DAG 2 — CONSUMER</text>
+          <text x="60" y="300" fill="#b9b4d0" font-family="Courier New, monospace" font-size="12">schedule = [raw_asset]</text>
+          <text x="430" y="280" fill="#e0e0e0" font-family="Segoe UI, sans-serif" font-size="12" text-anchor="middle">⚡ auto-triggered</text>
+          <text x="430" y="298" fill="#b9b4d0" font-family="Segoe UI, sans-serif" font-size="10.5" text-anchor="middle">no schedule · no sensor · no polling</text>
+
+          <!-- task: raw_to_curated -->
+          <rect x="55" y="330" width="210" height="48" rx="8" fill="#1a1a2e" stroke="#7fdbca" stroke-width="1.5"/>
+          <text x="160" y="359" fill="#7fdbca" font-family="Courier New, monospace" font-size="13" text-anchor="middle">raw_to_curated</text>
+
+          <!-- arrow between tasks -->
+          <line x1="265" y1="354" x2="320" y2="354" stroke="#93C572" stroke-width="2.5" marker-end="url(#arrow)"/>
+
+          <!-- task: curated_to_aggregated -->
+          <rect x="330" y="330" width="255" height="48" rx="8" fill="#1a1a2e" stroke="#7fdbca" stroke-width="1.5"/>
+          <text x="457" y="359" fill="#7fdbca" font-family="Courier New, monospace" font-size="13" text-anchor="middle">curated_to_aggregated</text>
+        </svg>
+      </div>
+
+    </div>
+
+    <!-- SHORTCUT NOTE -->
+    <div class="banner-info-green">
+      ⏩ <strong>Short on time, or just want it to work?</strong> Ready-made copies of both DAGs are in the
+      <code>backup-dags/</code> folder of the Live Session bundle — <code>nyc_tlc_producer.py</code> and
+      <code>nyc_tlc_consumer.py</code>. You can upload those directly in Part 4 instead of typing. We still recommend
+      building them yourself at least once so the Asset wiring makes sense.
+    </div>
+
+    <!-- DAG 1 PRODUCER -->
+    <div class="section">
+      <h2>Part 2 — Build DAG 1: The Producer</h2>
+      <p><strong>Estimated time:</strong> 8 minutes</p>
+      <p>In <strong>Kiro</strong>, create a new file <code>nyc_tlc_producer.py</code>. It runs the ingestion Glue job and
+      <strong>declares the raw Asset as its output</strong> — representing "fresh raw data has landed."</p>
+
+      <h3>Step 1 — Imports</h3>
+      <p>Note the <code>Asset</code> import comes from <code>airflow.sdk</code> (the Airflow 3 way).</p>
+      <div class="code-block">from datetime import datetime
+from airflow.sdk import DAG, Asset
+from airflow.providers.amazon.aws.operators.glue import GlueJobOperator</div>
+
+      <h3>Step 2 — Define the shared Asset</h3>
+      <p>This is the "contract" between the two DAGs. The URI is just a <strong>logical label</strong> — it does not have to
+      be a real, resolvable S3 path; Airflow only uses it to match producer and consumer. We name it after the raw data
+      so it's meaningful. <strong>Both DAGs must use the exact same URI string.</strong></p>
+      <div class="code-block">raw_asset = Asset("s3://mission-deh-hof/nyctlc/fhvhv_tripdata_raw")</div>
+      <div class="info-box">
+        ℹ️ Because this is just a label, there's <strong>no account ID to insert</strong> — leave the string exactly as shown
+        so it matches in both files.
+      </div>
+
+      <h3>Step 3 — Define the producer DAG and its task</h3>
+      <p>The ingestion task adds one new argument: <code>outlets=[raw_asset]</code>. That's the only line that makes this a
+      producer.</p>
+      <div class="code-block">default_args = {
+    'owner': 'mission-deh-hof',
+    'retries': 1,
+}
+
+with DAG(
+    dag_id='nyc_tlc_producer',
+    default_args=default_args,
+    schedule='@monthly',
+    start_date=datetime(2026, 1, 1),
+) as dag:
+
+    data_ingestion = GlueJobOperator(
+        task_id='data_ingestion',
+        job_name='mission-deh-hof-nyctlc-ingestion',
+        outlets=[raw_asset],          # 👈 declares this task PRODUCES the raw asset
+    )</div>
+
+      <div class="info-box">
+        ℹ️ <code>outlets</code> is the whole trick. When <code>data_ingestion</code> <strong>succeeds</strong>, Airflow
+        records an "asset update" event for <code>raw_asset</code>. That event is what wakes up DAG 2.
+      </div>
+    </div>
+
+    <!-- DAG 2 CONSUMER -->
+    <div class="section">
+      <h2>Part 3 — Build DAG 2: The Consumer</h2>
+      <p><strong>Estimated time:</strong> 5 minutes</p>
+      <p>Create a second file <code>nyc_tlc_consumer.py</code>. It runs <code>raw_to_curated</code> then
+      <code>curated_to_aggregated</code>. The magic is in the <code>schedule</code> — instead of a cron string, it's a
+      <strong>list containing the Asset</strong>.</p>
+
+      <h3>Step 1 — Imports (same Asset import)</h3>
+      <div class="code-block">from datetime import datetime
+from airflow.sdk import DAG, Asset
+from airflow.providers.amazon.aws.operators.glue import GlueJobOperator</div>
+
+      <h3>Step 2 — Re-declare the SAME Asset</h3>
+      <p>Use the identical URI string from DAG 1. This is how Airflow knows the two DAGs are talking about the same data.</p>
+      <div class="code-block">raw_asset = Asset("s3://mission-deh-hof/nyctlc/fhvhv_tripdata_raw")</div>
+
+      <h3>Step 3 — Schedule the DAG ON the Asset, then define its tasks</h3>
+      <div class="code-block">default_args = {
+    'owner': 'mission-deh-hof',
+    'retries': 1,
+}
+
+with DAG(
+    dag_id='nyc_tlc_consumer',
+    default_args=default_args,
+    schedule=[raw_asset],          # 👈 run whenever raw_asset is updated — no cron!
+    start_date=datetime(2026, 1, 1),
+) as dag:
+
+    raw_to_curated = GlueJobOperator(
+        task_id='raw_to_curated',
+        job_name='mission-deh-hof-raw-to-curated-etl',
+    )
+
+    curated_to_aggregated = GlueJobOperator(
+        task_id='curated_to_aggregated',
+        job_name='mission-deh-hof-curated-to-aggregated-etl',
+    )
+
+    raw_to_curated >> curated_to_aggregated</div>
+
+      <div class="warning-box">
+        ⚠️ The URI in both files must match <strong>character for character</strong>. A trailing slash or a typo means
+        Airflow treats them as two different assets, and the consumer will never trigger.
+      </div>
+    </div>
+
+    <!-- UPLOAD + RUN -->
+    <div class="section">
+      <h2>Part 4 — Upload Both DAGs &amp; Watch the Hand-Off</h2>
+      <p><strong>Estimated time:</strong> 7 minutes</p>
+
+      <h3>Steps</h3>
+      <ol>
+        <li>Upload <strong>both</strong> files — <code>nyc_tlc_producer.py</code> and <code>nyc_tlc_consumer.py</code> — to the
+          <code>dags/</code> folder of the DAGs bucket (<strong>S3 Console → bucket → dags/ → Upload</strong>, same as Lab 1)</li>
+        <li>In the Airflow UI, wait ~1–2 min for both DAGs to appear, then <strong>unpause both</strong>
+          (<code>nyc_tlc_producer</code> and <code>nyc_tlc_consumer</code>)</li>
+        <li>Open <code>nyc_tlc_consumer</code> — notice its schedule shows the <strong>Asset</strong>, not a cron. It just
+          sits idle, waiting. Do <strong>not</strong> trigger it manually.</li>
+        <li>Trigger <code>nyc_tlc_producer</code> manually (▶). Watch it run <code>data_ingestion</code>.</li>
+        <li>The moment <code>data_ingestion</code> turns 🟢 green, watch <code>nyc_tlc_consumer</code> — within a few seconds
+          Airflow <strong>auto-starts a run of it</strong> (<code>raw_to_curated</code> → <code>curated_to_aggregated</code>), with no manual trigger. 🎉</li>
+      </ol>
+
+      <div class="info-box">
+        ℹ️ <strong>See the relationship visually:</strong> in the Airflow UI go to <strong>Assets</strong> (top menu). You'll
+        see the raw asset with <code>nyc_tlc_producer</code> as its producer and <code>nyc_tlc_consumer</code> as its
+        consumer — the dependency graph Airflow built from your two <code>Asset</code> declarations.
+      </div>
+
+      <div class="success-box">
+        ✅ You just built a <strong>data-driven pipeline across two DAGs</strong>. DAG 2 ran because the data it needed was
+        produced — not because a clock said so. This is how modern, decoupled pipelines hand off between teams.
+      </div>
+    </div>
+
+    <!-- TEARDOWN -->
+    <div class="section">
+      <h2>Part 5 — Tear It All Down (Do Not Skip)</h2>
+      <p><strong>Estimated time:</strong> 15–20 minutes</p>
+      <p>MWAA bills continuously while it exists. When you finish, run the one-shot teardown. It removes <strong>everything</strong> the setup created — MWAA first (to stop the hourly billing fastest), then the full pipeline.</p>
+
+      <h3>Run this</h3>
+      <div class="code-block">cd ~/scripts && chmod +x mission-deh-hof-teardown-all.sh && ./mission-deh-hof-teardown-all.sh</div>
+
+      <h3>What happens, in order</h3>
+      <table class="resource-table">
+        <thead>
+          <tr><th>Phase</th><th>What it removes</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Step 1 — MWAA</strong></td><td>Empties the DAGs bucket (all object versions + delete markers), deletes the CloudFormation stack (MWAA env, VPC, NAT gateways, IAM role), polls until <code>DELETED</code>.</td></tr>
+          <tr><td><strong>Step 2 — Pipeline</strong></td><td>Deletes Glue jobs/crawlers/databases, Step Functions, EventBridge schedule, SNS topic, DynamoDB tables, the data-lake S3 bucket, and the Glue IAM role.</td></tr>
+        </tbody>
+      </table>
+      <p>Wait for the final <strong>"ALL DONE — billing has stopped"</strong> message.</p>
+
+      <div class="warning-box">
+        ⚠️ This permanently deletes <strong>both S3 buckets and all their contents</strong>, the MWAA environment, VPC and
+        networking, DynamoDB tables, and all IAM roles. Download anything you want to keep first.
+      </div>
+
+      <div class="info-box">
+        ℹ️ If the MWAA stack shows <code>DELETE_FAILED</code>, the script prints the failing resources and continues to the
+        pipeline teardown anyway. Re-run the command, or delete the flagged resource in the console, then re-run.
+      </div>
+
+      <div class="success-box">
+        ✅ When the stack is gone, billing stops. Confirm in <strong>CloudFormation → Stacks</strong> that <code>mission-deh-hof-stack</code> no longer appears.
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+      <p>© Sachin Chandrashekhar — Data Engineering Hub. All Rights Reserved.</p>
+    </div>
+
+  </div>
+</body>
+</html>
