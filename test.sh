@@ -1,0 +1,2 @@
+echo 'SAmple Script'
+exit
