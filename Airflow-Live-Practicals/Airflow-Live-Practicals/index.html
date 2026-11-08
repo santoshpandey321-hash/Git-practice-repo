@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Apache Airflow on AWS (MWAA) — Live Labs | DEH Diamond</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #ffffff; color: #1f1840; min-height: 100vh; padding: 2rem; line-height: 1.7; }
+    .container { max-width: 900px; margin: 0 auto; }
+    .brand-header { text-align: center; margin-bottom: 1.5rem; padding: 1.5rem 2rem; background: #1f1840; border-radius: 12px; color: #ffffff; }
+    .brand-header h1 { font-size: 2rem; color: #93C572; margin-bottom: 0.3rem; }
+    .brand-header .subtitle { font-size: 1.1rem; color: #e0e0e0; }
+    .brand-header .brand-name { font-size: 0.85rem; color: #93C572; margin-top: 0.8rem; font-weight: 600; letter-spacing: 0.5px; }
+    .intro { background: #f9f9fc; border: 1px solid #e0dce8; border-radius: 12px; padding: 1.5rem 1.8rem; margin-bottom: 1.5rem; color: #333; font-size: 0.95rem; }
+    .intro strong { color: #1f1840; }
+    .lab-card { display: block; text-decoration: none; background: #f9f9fc; border: 1px solid #e0dce8; border-left: 6px solid #93C572; border-radius: 12px; padding: 1.6rem 1.8rem; margin-bottom: 1.2rem; transition: box-shadow 0.15s ease, transform 0.15s ease; }
+    .lab-card:hover { box-shadow: 0 4px 16px rgba(31, 24, 64, 0.15); transform: translateY(-2px); }
+    .lab-card .lab-tag { display: inline-block; background: #1f1840; color: #93C572; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; padding: 0.25rem 0.6rem; border-radius: 5px; margin-bottom: 0.7rem; }
+    .lab-card h2 { font-size: 1.3rem; color: #1f1840; margin-bottom: 0.4rem; }
+    .lab-card p { color: #555; font-size: 0.92rem; margin-bottom: 0.8rem; }
+    .lab-card ul { padding-left: 1.3rem; margin: 0.4rem 0 0.8rem; }
+    .lab-card li { color: #444; font-size: 0.88rem; margin-bottom: 0.25rem; }
+    .lab-card .cta { color: #2e7d32; font-weight: 700; font-size: 0.92rem; }
+    .lab-card .meta { color: #7b1fa2; font-size: 0.82rem; font-weight: 600; margin-top: 0.4rem; }
+    .footer { text-align: center; margin-top: 2rem; padding: 1.5rem; border-top: 2px solid #1f1840; color: #1f1840; font-size: 0.85rem; font-weight: 600; }
+    @media (max-width: 768px) { body { padding: 1rem; } .brand-header h1 { font-size: 1.5rem; } .lab-card { padding: 1.2rem; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- HEADER -->
+    <div class="brand-header">
+      <h1>🌬️ Apache Airflow on AWS (MWAA)</h1>
+      <p class="subtitle">Diamond — Live Session Labs</p>
+      <p class="brand-name">Sachin Chandrashekhar — Data Engineering Hub</p>
+    </div>
+
+    <!-- INTRO -->
+    <div class="intro">
+      <p>Welcome to the hands-on labs for <strong>Apache Airflow on AWS (MWAA)</strong>. Work through them
+      <strong>in order</strong> — Lab 2 reuses the environment you provision in Lab 1. Open each lab below.</p>
+      <p style="margin-top: 0.6rem;">⚠️ <strong>MWAA bills by the hour and is not free-tier.</strong> Always run the teardown when you finish.</p>
+    </div>
+
+    <!-- LAB 1 -->
+    <a class="lab-card" href="mission-deh-hof-mwaa-setup-lab1.html">
+      <span class="lab-tag">Lab 1</span>
+      <h2>Your First DAG on MWAA</h2>
+      <p>Provision a managed Airflow environment and the full data pipeline with one command, then build and run your first
+      DAG — ending with hands-on incident recovery.</p>
+      <ul>
+        <li>One-shot setup: pipeline (Glue, S3, DynamoDB, Step Functions) + MWAA</li>
+        <li>Build a 3-task Glue pipeline DAG step by step</li>
+        <li>Incident ops: clear tasks, clear a DAG run, mark success</li>
+      </ul>
+      <span class="cta">Start Lab 1 →</span>
+      <div class="meta">⏱️ ~45–55 min · 💎 Diamond</div>
+    </a>
+
+    <!-- LAB 2 -->
+    <a class="lab-card" href="mission-deh-hof-mwaa-lab2.html">
+      <span class="lab-tag">Lab 2</span>
+      <h2>Dataset-Driven DAGs</h2>
+      <p>Split the pipeline across two DAGs that hand off through <em>data</em>, not a schedule — using Airflow 3's Asset
+      (data-aware) scheduling to auto-trigger the consumer.</p>
+      <ul>
+        <li>Producer DAG declares an Asset via <code>outlets</code></li>
+        <li>Consumer DAG scheduled on that Asset — auto-triggered, no polling</li>
+        <li>Watch the hand-off and the Assets dependency graph</li>
+      </ul>
+      <span class="cta">Start Lab 2 →</span>
+      <div class="meta">⏱️ ~20 min · 💎 Diamond · requires Lab 1 environment</div>
+    </a>
+
+    <!-- FOOTER -->
+    <div class="footer">
+      <p>© Sachin Chandrashekhar — Data Engineering Hub. All Rights Reserved.</p>
+    </div>
+
+  </div>
+</body>
+</html>

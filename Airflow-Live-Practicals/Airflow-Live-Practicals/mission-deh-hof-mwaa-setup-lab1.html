@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Airflow Lab 1 - Your First DAG on MWAA | DEH Diamond</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #ffffff; color: #1f1840; min-height: 100vh; padding: 2rem; line-height: 1.7; }
+    .container { max-width: 900px; margin: 0 auto; }
+    .brand-header { text-align: center; margin-bottom: 1.5rem; padding: 1.5rem 2rem; background: #1f1840; border-radius: 12px; color: #ffffff; }
+    .brand-header h1 { font-size: 2rem; color: #93C572; margin-bottom: 0.3rem; }
+    .brand-header .subtitle { font-size: 1.1rem; color: #e0e0e0; }
+    .brand-header .brand-name { font-size: 0.85rem; color: #93C572; margin-top: 0.8rem; font-weight: 600; letter-spacing: 0.5px; }
+    .banner-warning { background: #fff8e1; border: 2px solid #ffb300; border-left: 6px solid #ffb300; border-radius: 8px; padding: 1rem 1.2rem; margin-bottom: 1rem; color: #5d4e00; font-size: 0.92rem; }
+    .banner-warning strong { color: #e65100; }
+    .banner-critical { background: #ffebee; border: 3px solid #c62828; border-left: 8px solid #c62828; border-radius: 8px; padding: 1.2rem 1.4rem; margin-bottom: 1.2rem; color: #b71c1c; font-size: 1rem; font-weight: 600; box-shadow: 0 2px 10px rgba(198, 40, 40, 0.25); }
+    .banner-critical .headline { display: block; font-size: 1.15rem; font-weight: 800; color: #c62828; margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.5px; }
+    .banner-info-green { background: #e8f5e9; border: 2px solid #93C572; border-left: 6px solid #93C572; border-radius: 8px; padding: 1rem 1.2rem; margin-bottom: 1rem; color: #1b5e20; font-size: 0.92rem; }
+    .banner-info-green a { color: #2e7d32; font-weight: 600; }
+    .banner-purple { background: #f3e5f5; border: 2px solid #7b1fa2; border-left: 6px solid #7b1fa2; border-radius: 8px; padding: 1rem 1.2rem; margin-bottom: 1.5rem; color: #4a148c; font-size: 0.92rem; }
+    .section { background: #f9f9fc; border: 1px solid #e0dce8; border-radius: 12px; padding: 1.8rem; margin-bottom: 1.5rem; page-break-inside: avoid; }
+    .section h2 { font-size: 1.3rem; color: #1f1840; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #93C572; }
+    .section h3 { font-size: 1.05rem; color: #1f1840; margin-top: 1.3rem; margin-bottom: 0.5rem; }
+    .section p, .section li { color: #333; margin-bottom: 0.5rem; }
+    .section ul, .section ol { padding-left: 1.5rem; margin-top: 0.5rem; }
+    .section ol li { margin-bottom: 0.7rem; }
+    .code-block { background: #1a1a2e; border-radius: 8px; padding: 1rem 1.2rem; margin: 1rem 0; font-family: 'Courier New', Courier, monospace; font-size: 0.88rem; color: #7fdbca; overflow-x: auto; white-space: pre; line-height: 1.6; }
+    .info-box { background: #e3f2fd; border-left: 4px solid #1976d2; border-radius: 6px; padding: 0.8rem 1rem; margin: 0.8rem 0; color: #0d47a1; font-size: 0.9rem; }
+    .warning-box { background: #fff8e1; border-left: 4px solid #f9a825; border-radius: 6px; padding: 0.8rem 1rem; margin: 0.8rem 0; color: #5d4e00; font-size: 0.9rem; }
+    .success-box { background: #e8f5e9; border-left: 4px solid #43a047; border-radius: 6px; padding: 0.8rem 1rem; margin: 0.8rem 0; color: #1b5e20; font-size: 0.9rem; }
+    .resource-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+    .resource-table th { background: #1f1840; color: #93C572; padding: 0.7rem 1rem; text-align: left; font-weight: 600; }
+    .resource-table td { padding: 0.6rem 1rem; border-bottom: 1px solid #e0dce8; color: #333; }
+    .resource-table tr:nth-child(even) { background: #f4f2f8; }
+    .resource-table code { background: #eee8f5; padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.85rem; color: #4a148c; }
+    .architecture-block { background: #1f1840; border-radius: 12px; padding: 2rem; margin: 1.5rem 0; color: #e0e0e0; text-align: center; }
+    .architecture-block h3 { color: #93C572; margin-bottom: 1rem; }
+    .architecture-block .flow { font-family: 'Courier New', monospace; font-size: 1rem; color: #7fdbca; line-height: 2; }
+    .whats-next { background: #1f1840; border-radius: 12px; padding: 2rem; margin-top: 2rem; margin-bottom: 1.5rem; color: #e0e0e0; }
+    .whats-next h2 { color: #93C572; margin-bottom: 1rem; border-bottom: none; }
+    .whats-next p, .whats-next li { color: #d0d0d0; margin-bottom: 0.5rem; }
+    .whats-next ul { padding-left: 1.5rem; }
+    .footer { text-align: center; margin-top: 2rem; padding: 1.5rem; border-top: 2px solid #1f1840; color: #1f1840; font-size: 0.85rem; font-weight: 600; }
+    @media print { body { padding: 0.5rem; font-size: 11pt; } .container { max-width: 100%; } .section, .architecture-block, .whats-next { page-break-inside: avoid; } .code-block { font-size: 9pt; } }
+    @media (max-width: 768px) { body { padding: 1rem; } .brand-header h1 { font-size: 1.5rem; } .section { padding: 1.2rem; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- HEADER -->
+    <div class="brand-header">
+      <h1>🌬️ Airflow Lab 1: Your First DAG on MWAA</h1>
+      <p class="subtitle">Diamond — Provision MWAA, then Build &amp; Run a Pipeline DAG</p>
+      <p class="brand-name">Sachin Chandrashekhar — Data Engineering Hub</p>
+    </div>
+
+    <!-- VIDEO + TIME BANNER -->
+    <div class="banner-info-green">
+      🎥 <strong>Follow these video instructions for hands on:</strong>
+      <a href="https://learn.sachin.cloud/channels/cO6b3zVOLp" target="_blank" rel="noopener">https://learn.sachin.cloud/channels/cO6b3zVOLp</a>
+      <br><br>⏱️ <strong>Expected completion time:</strong> 1 hour
+    </div>
+
+    <!-- PAID ACCOUNT REQUIRED -->
+    <div class="banner-critical">
+      <span class="headline">🛑 Paid AWS Account Required</span>
+      MWAA is <strong>not available on the AWS Free Tier</strong>. If you are using a Free Tier account, you
+      <strong>must upgrade to a paid (standard) AWS account</strong> before starting this lab — otherwise the environment
+      will fail to provision. There is no free way to run MWAA.
+    </div>
+
+    <!-- COST BANNER -->
+    <div class="banner-warning">
+      <strong>⚠️ Cost Warning — READ THIS FIRST:</strong> MWAA is <strong>NOT</strong> free-tier eligible.
+      The <code>mw1.micro</code> environment used here bills per hour the environment exists (plus NAT Gateway,
+      Elastic IPs, and S3) — roughly <strong>$0.49/hour (~$12/day)</strong> as a rough guide, varying by region and usage.
+      <strong>Tear the environment down the moment you are done</strong> using the teardown script in this lab.
+      Leaving it running overnight is the single most common way learners get a surprise bill.
+    </div>
+
+    <!-- MISSION NOTE -->
+    <div class="banner-purple">
+      💎 <strong>Lab Objective:</strong> Stand up the <strong>entire environment with one command</strong> — the full data
+      pipeline (Glue jobs, S3 data lake, DynamoDB, SNS, Step Functions) <em>and</em> a live
+      <strong>Amazon MWAA (Managed Workflows for Apache Airflow)</strong> environment. By the end you'll have a working
+      Airflow UI and a pipeline waiting behind it, so the DAG you build in class just works.
+      <br><br><strong>⏱️ Estimated time: ~45–55 minutes</strong> (mostly unattended — MWAA provisioning alone takes 20–40 min)
+    </div>
+
+    <!-- REGION NOTICE -->
+    <div class="banner-warning">
+      <strong>🌐 IMPORTANT — Set your region to us-east-1 before starting!</strong><br>
+      This lab is designed to run in <strong>US East (N. Virginia) us-east-1</strong>. The scripts are hardcoded to this region.
+    </div>
+
+    <!-- PART 1: SET UP LOCALLY + UPLOAD ZIP -->
+    <div class="section">
+      <h2>Part 1 — Set Up Locally &amp; Upload the Scripts</h2>
+      <p><strong>Estimated time:</strong> 3 minutes</p>
+
+      <h3>On your laptop</h3>
+      <ol>
+        <li>You're reading this guide, so you've <strong>already unzipped</strong> the <strong>Live Session</strong> folder — nice work. (This guide lives inside that folder, so opening it means the unzip is done.)</li>
+        <li>Open that unzipped folder in <strong>Kiro</strong> as your workspace. You'll see this guide, a <code>scripts/</code> folder, and <code>scripts.zip</code> inside it</li>
+      </ol>
+
+      <h3>In AWS</h3>
+      <ol>
+        <li>Log in to the <strong>AWS Console</strong> and confirm the region (top-right) is <strong>US East (N. Virginia) us-east-1</strong></li>
+        <li>Open <strong>CloudShell</strong> (terminal icon in the top navigation bar)</li>
+        <li>Upload the <code>scripts.zip</code> (from inside the unzipped Live Session folder) via <strong>Actions → Upload file</strong></li>
+      </ol>
+
+      <div class="warning-box">
+        ⚠️ The uploaded zip lands in your CloudShell home directory (<code>~</code>). Run the setup command from there.
+      </div>
+
+      <div class="info-box">
+        ℹ️ You'll keep Kiro open the whole lab — you'll use it to write the DAG in Part 3. CloudShell is only for running
+        the AWS setup and uploading the finished DAG.
+      </div>
+    </div>
+
+    <!-- PART 2: RUN SETUP -->
+    <div class="section">
+      <h2>Part 2 — Run the Full Setup (One Command)</h2>
+      <p><strong>Estimated time:</strong> ~45–55 minutes (mostly unattended)</p>
+      <p>This single command unzips the bundle, enters the <code>scripts/</code> folder, and runs the one-shot setup. It
+      provisions the pipeline <strong>first</strong>, then deploys MWAA.</p>
+
+      <h3>Run this</h3>
+      <div class="code-block">unzip -o scripts.zip && cd scripts && chmod +x mission-deh-hof-setup-all.sh && ./mission-deh-hof-setup-all.sh</div>
+
+      <div class="info-box">
+        ℹ️ Replace <code>scripts.zip</code> with your actual zip filename. If your zip extracts the files directly
+        instead of into a <code>scripts/</code> folder, drop the <code>cd scripts &amp;&amp;</code> part.
+      </div>
+
+      <h3>What happens, in order</h3>
+      <table class="resource-table">
+        <thead>
+          <tr><th>Phase</th><th>What it does</th><th>Time</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Step 1 — Pipeline</strong></td><td>Creates the S3 data lake, 3 Glue jobs, databases, crawlers, DynamoDB tables, SNS topic, and Step Functions state machines. Runs the ingestion job.</td><td>~5–10 min</td></tr>
+          <tr><td><strong>Step 2 — MWAA</strong></td><td>Creates the CloudFormation stack (VPC, DAGs bucket, Airflow 3.0.6 env), waits for <code>CREATE_COMPLETE</code>, prints stack outputs, and creates the <code>dags/</code> folder.</td><td>~20–40 min</td></tr>
+        </tbody>
+      </table>
+
+      <ol>
+        <li>During <strong>Step 1</strong> the script will <strong>pause and ask for your email</strong> for pipeline alerts.
+          Type your email and press Enter. Then <strong>check your inbox and confirm the SNS subscription</strong> (check spam too).</li>
+        <li>During <strong>Step 2</strong> the script polls the stack status every 30 seconds and prints lines like:
+          <div class="code-block">[INFO] Current status: CREATE_IN_PROGRESS (2026-10-12 ...)</div>
+        </li>
+        <li>Wait for the final <strong>"ALL DONE"</strong> message. Do <strong>not</strong> close CloudShell while it runs.</li>
+      </ol>
+
+
+
+
+
+      <div class="info-box">
+        ℹ️ <strong>Why so long?</strong> MWAA provisions a managed Airflow cluster behind the scenes. The VPC, NAT gateways,
+        and the environment itself take ~20–40 minutes (it has run as long as 40 min in practice). This is normal.
+      </div>
+
+      <h3>What Gets Created</h3>
+      <p><strong>Step 1 — Pipeline (data plane):</strong></p>
+      <table class="resource-table">
+        <thead>
+          <tr><th>Resource</th><th>Name / Detail</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>S3 Data Lake</td><td><code>mission-deh-hof-nyctlc-&lt;ACCOUNT_ID&gt;</code> (raw / curated / aggregated)</td></tr>
+          <tr><td>Glue Jobs</td><td><code>mission-deh-hof-nyctlc-ingestion</code>, <code>...-raw-to-curated-etl</code>, <code>...-curated-to-aggregated-etl</code></td></tr>
+          <tr><td>Glue Databases + Crawlers</td><td><code>nyctlc_raw</code>, <code>nyctlc_curated</code>, <code>nyctlc_aggregated</code> (+ 3 crawlers)</td></tr>
+          <tr><td>DynamoDB Tables</td><td><code>mission-deh-hof-datalake-metadata</code>, <code>mission-deh-hof-job-audit</code></td></tr>
+          <tr><td>SNS Topic</td><td><code>mission-deh-hof-pipeline-alerts</code></td></tr>
+          <tr><td>Step Functions</td><td><code>mission-deh-hof-lyft-pipeline</code>, <code>mission-deh-hof-lyft-transform-pipeline</code></td></tr>
+        </tbody>
+      </table>
+
+      <p><strong>Step 2 — MWAA (orchestration plane):</strong></p>
+      <table class="resource-table">
+        <thead>
+          <tr><th>Resource</th><th>Name / Detail</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>CloudFormation Stack</td><td><code>mission-deh-hof-stack</code></td></tr>
+          <tr><td>VPC</td><td><code>10.0.0.0/16</code> (2 public + 2 private subnets)</td></tr>
+          <tr><td>NAT Gateways</td><td>2 (one per AZ) + 2 Elastic IPs</td></tr>
+          <tr><td>S3 DAGs Bucket</td><td><code>mission-deh-hof-airflow-&lt;ACCOUNT_ID&gt;</code></td></tr>
+          <tr><td>IAM Execution Role</td><td><code>mission-deh-hof-execution-role</code></td></tr>
+          <tr><td>MWAA Environment</td><td><code>mission-deh-hof</code> — Airflow <code>3.0.6</code>, class <code>mw1.micro</code></td></tr>
+          <tr><td>DAGs path</td><td><code>s3://mission-deh-hof-airflow-&lt;ACCOUNT_ID&gt;/dags/</code></td></tr>
+        </tbody>
+      </table>
+
+      <div class="warning-box">
+        ⚠️ If deployment fails, the script has a built-in <strong>cleanup trap</strong> — it automatically deletes the
+        stack so you aren't left with half-provisioned resources. Read the <code>CREATE_FAILED</code> table it prints for
+        the root cause before retrying.
+      </div>
+
+      <div class="success-box">
+        ✅ When you see <strong>"Deployment completed successfully!"</strong> and a table of <strong>Stack Outputs</strong>,
+        your environment is live. Copy the <code>WebserverUrl</code> value — that's your Airflow UI.
+      </div>
+    </div>
+
+    <!-- PART 3: BUILD THE DAG STEP BY STEP -->
+    <div class="section">
+      <h2>Part 3 — Build Your First DAG (Step by Step)</h2>
+      <p><strong>Estimated time:</strong> 20–25 minutes (we do this together in class)</p>
+
+      <div class="info-box">
+        ⏳ <strong>Why now?</strong> MWAA is still provisioning in the background (Part 2 can take 20–40 minutes). Rather than
+        sit and wait, we'll use that time to build the DAG in Kiro. By the time you finish, the Airflow environment should be
+        up — then you'll access it (Part 4) and upload what you built here.
+      </div>
+
+      <p>New to Airflow? Perfect. We'll build one DAG from an empty file, one block at a time, adding each block below
+      <strong>in order</strong>. By the end you'll have a complete, working pipeline that runs your 3 Glue jobs in sequence.</p>
+
+      <div class="banner-info-green">
+        ⏩ <strong>Short on time, or just want it to work?</strong> Ready-made copies of this DAG are in the
+        <code>backup-dags/</code> folder of the Live Session bundle:
+        <ul style="margin-top: 0.4rem;">
+          <li><code>nyc_tlc_pipeline.py</code> — the minimal version</li>
+          <li><code>nyc_tlc_pipeline_with_alerts.py</code> — the version with SNS alerts</li>
+        </ul>
+        You can upload one of those directly in Part 5 instead of typing. We still recommend building it yourself at least
+        once — that's how the concepts stick.
+      </div>
+
+      <div class="info-box">
+        🧠 <strong>What is a DAG?</strong> A DAG (Directed Acyclic Graph) is just a recipe that says "run these tasks, in
+        this order." In Airflow you write that recipe in Python. Our recipe: ingest data → clean it → aggregate it.
+      </div>
+
+      <div class="warning-box">
+        🧰 <strong>Where to write this — create the file in Kiro.</strong> Python breaks if the indentation is off, and
+        plain text editors (Notepad, TextEdit) can insert tabs or "smart quotes" that silently break your DAG. Kiro is a
+        real code editor, so it handles indentation correctly.
+        <ol style="margin-top: 0.5rem;">
+          <li>In <strong>Kiro</strong>, open the unzipped <strong>Live Session</strong> folder as your workspace (you already did this to read this guide).</li>
+          <li>Create a new file named <code>nyc_tlc_pipeline.py</code> in that folder.</li>
+          <li>Type each block below into the file, <strong>in order</strong>. Use <strong>spaces, not tabs</strong> (4 spaces per indent level — Kiro does this automatically when you press Tab).</li>
+          <li>Save the file. You'll upload it to MWAA in Part 5.</li>
+        </ol>
+      </div>
+
+      <!-- STEP 1 -->
+      <h3>Step 1 — Import the libraries</h3>
+      <p>Every DAG file starts by importing the tools it needs. We need: date helpers, the <code>DAG</code> class itself,
+      and the operator that runs a Glue job.</p>
+      <div class="code-block">from datetime import datetime
+from airflow import DAG
+from airflow.providers.amazon.aws.operators.glue import GlueJobOperator</div>
+      <ul>
+        <li><code>datetime</code> — to tell the DAG when it's allowed to start running</li>
+        <li><code>DAG</code> — the container that holds all our tasks</li>
+        <li><code>GlueJobOperator</code> — a ready-made task that starts an AWS Glue job and waits for it to finish</li>
+      </ul>
+
+      <!-- STEP 2 -->
+      <h3>Step 2 — Define the bare-minimum default_args</h3>
+      <p><code>default_args</code> are settings applied to <em>every</em> task in the DAG, so you don't repeat yourself.
+      We'll start with the absolute minimum needed to run.</p>
+      <div class="code-block">default_args = {
+    'owner': 'mission-deh-hof',
+    'retries': 1,
+}</div>
+      <ul>
+        <li><code>owner</code> — a label showing who owns this DAG (shows up in the UI)</li>
+        <li><code>retries</code> — if a task fails, try it one more time before giving up</li>
+      </ul>
+      <div class="info-box">
+        ℹ️ That's genuinely all you need to start. Airflow fills in sensible defaults for everything else. We'll add more
+        later only when we need it.
+      </div>
+
+      <!-- STEP 3 -->
+      <h3>Step 3 — Define the DAG</h3>
+      <p>Now create the DAG container using a <code>with</code> block. Everything indented under it belongs to this DAG.</p>
+      <div class="code-block">with DAG(
+    dag_id='nyc_tlc_pipeline',
+    default_args=default_args,
+    schedule='@monthly',
+    start_date=datetime(2026, 1, 1),
+) as dag:</div>
+      <ul>
+        <li><code>dag_id</code> — the unique name you'll see in the Airflow UI</li>
+        <li><code>schedule='@monthly'</code> — how often it runs (monthly here; use <code>None</code> to only run manually)</li>
+        <li><code>start_date</code> — the earliest date the DAG is allowed to run</li>
+      </ul>
+
+      <!-- STEP 4 -->
+      <h3>Step 4 — Define the tasks</h3>
+      <p>Each task runs one Glue job. Keep these <strong>indented inside</strong> the <code>with DAG(...)</code> block.
+      The <code>job_name</code> values must match the Glue jobs the setup script created exactly.</p>
+      <div class="code-block">    data_ingestion = GlueJobOperator(
+        task_id='data_ingestion',
+        job_name='mission-deh-hof-nyctlc-ingestion',
+    )
+
+    raw_to_curated = GlueJobOperator(
+        task_id='raw_to_curated',
+        job_name='mission-deh-hof-raw-to-curated-etl',
+    )
+
+    curated_to_aggregated = GlueJobOperator(
+        task_id='curated_to_aggregated',
+        job_name='mission-deh-hof-curated-to-aggregated-etl',
+    )</div>
+      <ul>
+        <li><code>task_id</code> — the task's name in the UI (must be unique within the DAG)</li>
+        <li><code>job_name</code> — the <strong>exact</strong> name of the Glue job to run</li>
+      </ul>
+      <div class="warning-box">
+        ⚠️ <strong>These job names are not optional.</strong> They must match what the setup script created:
+        <code>mission-deh-hof-nyctlc-ingestion</code>, <code>mission-deh-hof-raw-to-curated-etl</code>,
+        <code>mission-deh-hof-curated-to-aggregated-etl</code>. A typo here = "job not found" failure.
+      </div>
+
+      <!-- STEP 5 -->
+      <h3>Step 5 — Set the task dependencies</h3>
+      <p>This one line is the heart of the DAG — it tells Airflow the <em>order</em>. The <code>&gt;&gt;</code> arrow means
+      "then run." Keep it indented inside the DAG block.</p>
+      <div class="code-block">    data_ingestion >> raw_to_curated >> curated_to_aggregated</div>
+      <p>Read it left to right: ingest first, then curate, then aggregate. Each task waits for the one before it to
+      succeed.</p>
+
+      <!-- CHECKPOINT: FULL MINIMAL DAG -->
+      <h3>✅ Checkpoint — Your complete working DAG</h3>
+      <p>Put the 5 blocks together and this is your full file. This alone is a fully working pipeline.</p>
+      <div class="code-block">from datetime import datetime
+from airflow import DAG
+from airflow.providers.amazon.aws.operators.glue import GlueJobOperator
+
+default_args = {
+    'owner': 'mission-deh-hof',
+    'retries': 1,
+}
+
+with DAG(
+    dag_id='nyc_tlc_pipeline',
+    default_args=default_args,
+    schedule='@monthly',
+    start_date=datetime(2026, 1, 1),
+) as dag:
+
+    data_ingestion = GlueJobOperator(
+        task_id='data_ingestion',
+        job_name='mission-deh-hof-nyctlc-ingestion',
+    )
+
+    raw_to_curated = GlueJobOperator(
+        task_id='raw_to_curated',
+        job_name='mission-deh-hof-raw-to-curated-etl',
+    )
+
+    curated_to_aggregated = GlueJobOperator(
+        task_id='curated_to_aggregated',
+        job_name='mission-deh-hof-curated-to-aggregated-etl',
+    )
+
+    data_ingestion >> raw_to_curated >> curated_to_aggregated</div>
+
+      <div class="success-box">
+        ✅ If you stop here, you have a complete, working DAG. The next part is an <strong>optional enhancement</strong> —
+        email/SNS alerts — that we'll add once the basic version runs.
+      </div>
+    </div>
+
+    <!-- PART 3B: ADD NOTIFICATIONS (ENHANCEMENT) -->
+    <div class="section">
+      <h2>Part 3B — Enhancement: Add Success &amp; Failure Alerts (Optional)</h2>
+      <p><strong>Estimated time:</strong> 10 minutes</p>
+      <p>Right now the pipeline runs silently. Let's make it email you via the SNS topic the setup script already created
+      (<code>mission-deh-hof-pipeline-alerts</code>). We'll add two small Python functions and wire them in.</p>
+
+      <h3>Step 1 — Add two more imports (top of the file)</h3>
+      <div class="code-block">import boto3
+from airflow.operators.python import PythonOperator</div>
+      <ul>
+        <li><code>boto3</code> — the AWS SDK for Python, used here to publish an SNS message</li>
+        <li><code>PythonOperator</code> — a task that runs a plain Python function (for our success message)</li>
+      </ul>
+
+      <h3>Step 2 — Add the notification functions (before <code>default_args</code>)</h3>
+      <div class="code-block">def send_failure_notification(context):
+    """Called automatically when a task fails."""
+    account_id = boto3.client('sts').get_caller_identity()['Account']
+    sns = boto3.client('sns', region_name='us-east-1')
+    topic_arn = f"arn:aws:sns:us-east-1:{account_id}:mission-deh-hof-pipeline-alerts"
+    ti = context['task_instance']
+    sns.publish(
+        TopicArn=topic_arn,
+        Subject='NYC TLC Pipeline FAILED',
+        Message=f"Task '{ti.task_id}' failed in DAG '{ti.dag_id}'.",
+    )
+
+def send_success_notification(**context):
+    """Called when the whole pipeline finishes successfully."""
+    account_id = boto3.client('sts').get_caller_identity()['Account']
+    sns = boto3.client('sns', region_name='us-east-1')
+    topic_arn = f"arn:aws:sns:us-east-1:{account_id}:mission-deh-hof-pipeline-alerts"
+    sns.publish(
+        TopicArn=topic_arn,
+        Subject='NYC TLC Pipeline SUCCESS',
+        Message="All 3 stages completed: ingestion, curated, aggregated.",
+    )</div>
+      <div class="info-box">
+        ℹ️ Notice the topic name is <code>mission-deh-hof-pipeline-alerts</code> — the exact topic the setup script
+        created. The account ID is looked up automatically, so there's nothing to hardcode.
+      </div>
+
+      <h3>Step 3 — Hook failure alerts into <code>default_args</code></h3>
+      <p>Add one line so <em>any</em> task failure triggers the alert:</p>
+      <div class="code-block">default_args = {
+    'owner': 'mission-deh-hof',
+    'retries': 1,
+    'on_failure_callback': send_failure_notification,
+}</div>
+
+      <h3>Step 4 — Add a success task and extend the dependencies</h3>
+      <p>Inside the DAG block, add a final task that fires the success alert, then put it at the end of the chain:</p>
+      <div class="code-block">    notify_success = PythonOperator(
+        task_id='notify_success',
+        python_callable=send_success_notification,
+    )
+
+    data_ingestion >> raw_to_curated >> curated_to_aggregated >> notify_success</div>
+
+      <div class="success-box">
+        ✅ Now a failure in any task emails you automatically, and a clean run ends with a success email. Save the file —
+        you're ready to upload.
+      </div>
+    </div>
+
+    <!-- PART 4: ACCESS AIRFLOW -->
+    <div class="section">
+      <h2>Part 4 — Access the Airflow UI</h2>
+      <p><strong>Estimated time:</strong> 2 minutes</p>
+
+      <div class="info-box">
+        ⏳ <strong>Environment ready?</strong> By now your DAG is built (Part 3) and MWAA should have finished provisioning
+        (look for the <strong>"ALL DONE"</strong> message in CloudShell). If it's still spinning up, give it a few more
+        minutes before continuing.
+      </div>
+
+      <h3>Easiest way — from the MWAA console</h3>
+      <ol>
+        <li>In the AWS Console, search for <strong>MWAA</strong> (or go to <strong>Managed Apache Airflow</strong>)</li>
+        <li>Click <strong>Environments</strong> in the left menu</li>
+        <li>Find <code>mission-deh-hof</code> in the list and click <strong>Open Airflow UI</strong></li>
+        <li>You'll land on the <strong>Apache Airflow 3.0.6</strong> home page with no DAGs yet — that's expected</li>
+      </ol>
+
+      <div class="info-box">
+        ℹ️ The <strong>Open Airflow UI</strong> button signs you in automatically using your AWS login — no URL to copy, no
+        separate password.
+      </div>
+    </div>
+
+    <!-- PART 5: UPLOAD THE DAG -->
+    <div class="section">
+      <h2>Part 5 — Upload Your DAG to MWAA</h2>
+      <p><strong>Estimated time:</strong> 3 minutes</p>
+      <p>MWAA loads DAGs from the <code>dags/</code> folder of the DAGs S3 bucket. Upload your <code>nyc_tlc_pipeline.py</code>
+      and Airflow picks it up within a minute or two.</p>
+
+      <h3>Steps</h3>
+      <ol>
+        <li>Go to <strong>AWS Console → S3</strong> and open the DAGs bucket named <code>mission-deh-hof-airflow-&lt;your-account-id&gt;</code></li>
+        <li>Open the <code>dags/</code> folder inside the bucket</li>
+        <li>Click <strong>Upload → Add files</strong>, select the <code>nyc_tlc_pipeline.py</code> you built in Kiro, then click <strong>Upload</strong></li>
+        <li>Open the Airflow UI and refresh — <code>nyc_tlc_pipeline</code> appears in the list within ~1–2 minutes</li>
+        <li>Flip the DAG's toggle to <strong>on</strong> (new DAGs arrive <strong>paused</strong> by default — this unpauses it). If it doesn't start on its own, click <strong>Trigger DAG</strong> (▶) to run it manually</li>
+        <li>Open the <strong>Graph</strong> view to watch each task turn green as it runs</li>
+      </ol>
+
+      <div class="warning-box">
+        ⚠️ If the DAG shows an <strong>import error</strong> in the UI, click it to read the message. Usual causes:
+        a typo, wrong indentation, or the Amazon provider package missing.
+      </div>
+
+      <div class="success-box">
+        ✅ When all tasks are green, your pipeline ran end-to-end — ingestion → curated → aggregated — orchestrated by the
+        DAG you just built. 🎉
+      </div>
+    </div>
+
+    <!-- PART 6: TEARDOWN -->
+    <div class="section">
+      <h2>Part 6 — Tear It All Down (Do Not Skip)</h2>
+      <p><strong>Estimated time:</strong> 15–20 minutes</p>
+      <p>MWAA bills continuously while it exists. When you finish, run the one-shot teardown. It removes <strong>everything</strong> the setup created — MWAA first (to stop the hourly billing fastest), then the full pipeline.</p>
+
+      <h3>Run this</h3>
+      <div class="code-block">cd ~/scripts && chmod +x mission-deh-hof-teardown-all.sh && ./mission-deh-hof-teardown-all.sh</div>
+
+      <h3>What happens, in order</h3>
+      <table class="resource-table">
+        <thead>
+          <tr><th>Phase</th><th>What it removes</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Step 1 — MWAA</strong></td><td>Empties the DAGs bucket (all object versions + delete markers), deletes the CloudFormation stack (MWAA env, VPC, NAT gateways, IAM role), polls until <code>DELETED</code>.</td></tr>
+          <tr><td><strong>Step 2 — Pipeline</strong></td><td>Deletes Glue jobs/crawlers/databases, Step Functions, EventBridge schedule, SNS topic, DynamoDB tables, the data-lake S3 bucket, and the Glue IAM role.</td></tr>
+        </tbody>
+      </table>
+      <p>Wait for the final <strong>"ALL DONE — billing has stopped"</strong> message.</p>
+
+      <div class="warning-box">
+        ⚠️ This permanently deletes <strong>both S3 buckets and all their contents</strong>, the MWAA environment, VPC and
+        networking, DynamoDB tables, and all IAM roles. Download anything you want to keep first.
+      </div>
+
+      <div class="info-box">
+        ℹ️ If the MWAA stack shows <code>DELETE_FAILED</code>, the script prints the failing resources and continues to the
+        pipeline teardown anyway. Re-run the command, or delete the flagged resource in the console, then re-run.
+      </div>
+
+      <div class="success-box">
+        ✅ When the stack is gone, billing stops. Confirm in <strong>CloudFormation → Stacks</strong> that <code>mission-deh-hof-stack</code> no longer appears.
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+      <p>© Sachin Chandrashekhar — Data Engineering Hub. All Rights Reserved.</p>
+    </div>
+
+  </div>
+</body>
+</html>
